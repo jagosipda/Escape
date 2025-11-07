@@ -1,11 +1,13 @@
 using UnityEngine;
 
 /// <summary>
-/// 시침/분침 공용: 클릭한 후 마우스를 드래그하면
-/// 부모 Pivot(회전 중심)을 기준으로 시계방향으로 부드럽게 회전.
-/// Collider는 바늘 Mesh에, 스크립트도 같은 Mesh에 붙인다.
+/// 시침/분침 공용:
+/// - 중앙점(Reticle)을 맞춘 뒤 마우스 클릭 또는 VR 트리거를 누르고 있는 동안 회전.
+/// - Collider는 시침/분침 Mesh에, 스크립트도 같은 Mesh에 붙인다.
+/// - 서로 겹치지 않게 콜라이더를 살짝 띄우거나 Layer 분리.
+/// - 플레이어 스크립트는 수정하지 않아도 작동.
 /// </summary>
-public class ClockHandController : MonoBehaviour
+public class ClockHandController : MonoBehaviour, IInteractable
 {
     [Header("Pivot Reference")]
     [Tooltip("이 바늘이 회전할 중심(Pivot)을 지정하세요.")]
@@ -21,22 +23,26 @@ public class ClockHandController : MonoBehaviour
     private bool dragging = false;
     private float lastMouseX;
 
+    // 동시에 여러 바늘이 움직이지 않도록 제어용 static 변수
+    private static ClockHandController currentActive = null;
+
     void Start()
     {
-        // Pivot이 비어 있으면 부모를 자동 설정
         if (!pivot && transform.parent != null)
             pivot = transform.parent;
     }
 
-    void OnMouseDown()
+    // VR_PlayerMovement.TryInteract()가 호출하는 함수
+    public void Interact()
     {
-        dragging = true;
-        lastMouseX = Input.mousePosition.x;
-    }
+        // 이미 다른 바늘을 회전 중이면 무시
+        if (currentActive != null && currentActive != this)
+            return;
 
-    void OnMouseUp()
-    {
-        dragging = false;
+        dragging = true;
+        currentActive = this;
+        lastMouseX = Input.mousePosition.x;
+        Debug.Log($"{name} : 회전 시작");
     }
 
     void Update()
@@ -44,17 +50,37 @@ public class ClockHandController : MonoBehaviour
         if (!dragging || pivot == null)
             return;
 
+        // 마우스 / 트리거 버튼에서 손 떼면 중단
+        bool stopInput =
+            Input.GetMouseButtonUp(0) ||
+            Input.GetButtonUp("Fire1") ||
+            Input.GetButtonUp("Fire2");
+
+        if (stopInput)
+        {
+            dragging = false;
+            if (currentActive == this)
+                currentActive = null;
+            Debug.Log($"{name} : 회전 종료");
+            return;
+        }
+
+        // 회전량 계산
         float mouseDelta = Input.mousePosition.x - lastMouseX;
         lastMouseX = Input.mousePosition.x;
 
-        // 감도 적용
         float deltaRotation = mouseDelta * mouseSensitivity;
-
-        // 항상 시계 방향으로만 회전
         if (deltaRotation < 0)
             deltaRotation = -deltaRotation;
 
-        // 회전 적용 (Pivot 기준)
+        // Pivot 기준 시계 방향 회전
         pivot.Rotate(rotationAxis, -deltaRotation, Space.Self);
+    }
+
+    void OnDisable()
+    {
+        if (currentActive == this)
+            currentActive = null;
+        dragging = false;
     }
 }
