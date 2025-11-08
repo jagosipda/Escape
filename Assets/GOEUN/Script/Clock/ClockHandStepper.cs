@@ -1,86 +1,122 @@
 using UnityEngine;
+using UnityEngine.XR;
 
 /// <summary>
 /// 시침/분침 공용:
-/// - 중앙점(Reticle)을 맞춘 뒤 마우스 클릭 또는 VR 트리거를 누르고 있는 동안 회전.
-/// - Collider는 시침/분침 Mesh에, 스크립트도 같은 Mesh에 붙인다.
-/// - 서로 겹치지 않게 콜라이더를 살짝 띄우거나 Layer 분리.
-/// - 플레이어 스크립트는 수정하지 않아도 작동.
+/// - 마우스 클릭 또는 VR 트리거를 누르고 있는 동안 자동 회전.
+/// - 손 떼면 즉시 정지.
+/// - 회전 중에만 효과음 반복 재생.
 /// </summary>
 public class ClockHandController : MonoBehaviour, IInteractable
 {
     [Header("Pivot Reference")]
     [Tooltip("이 바늘이 회전할 중심(Pivot)을 지정하세요.")]
-    public Transform pivot; // 회전 중심 (부모 등)
+    public Transform pivot;
 
     [Header("Rotation Settings")]
     [Tooltip("회전 축 (보통 Z축)")]
     public Vector3 rotationAxis = Vector3.forward;
 
-    [Tooltip("마우스 감도 (2~4 추천)")]
-    public float mouseSensitivity = 3f;
+    [Tooltip("초당 회전 속도 (도/초)")]
+    public float rotationSpeed = 60f;  // 60° per second = 한 바퀴 6초
 
-    private bool dragging = false;
-    private float lastMouseX;
+    [Header("Sound Settings")]
+    [Tooltip("회전 중 재생할 효과음 (짧은 루프형 사운드)")]
+    public AudioSource audioSource;
+    public AudioClip rotationSfx;
 
-    // 동시에 여러 바늘이 움직이지 않도록 제어용 static 변수
+    [Header("VR Input Settings")]
+    [Tooltip("VR 컨트롤러 종류 (보통 오른손)")]
+    public XRNode controllerNode = XRNode.RightHand;
+
+    private bool rotating = false;
     private static ClockHandController currentActive = null;
+    private bool usingVR = false;
 
     void Start()
     {
         if (!pivot && transform.parent != null)
             pivot = transform.parent;
+
+        // 오디오 설정 초기화
+        if (audioSource)
+        {
+            audioSource.clip = rotationSfx;
+            audioSource.loop = true;
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 1.0f;
+            audioSource.Stop();
+        }
     }
 
-    // VR_PlayerMovement.TryInteract()가 호출하는 함수
     public void Interact()
     {
-        // 이미 다른 바늘을 회전 중이면 무시
+        // 다른 바늘이 돌고 있으면 무시
         if (currentActive != null && currentActive != this)
             return;
 
-        dragging = true;
+        rotating = true;
         currentActive = this;
-        lastMouseX = Input.mousePosition.x;
-        Debug.Log($"{name} : 회전 시작");
+
+        // VR 입력 장치 감지
+        InputDevice device = InputDevices.GetDeviceAtXRNode(controllerNode);
+        usingVR = device.isValid;
+
+        // 사운드 재생
+        if (audioSource && rotationSfx && !audioSource.isPlaying)
+            audioSource.Play();
+
+        Debug.Log($"{name} : 자동 회전 시작 ({(usingVR ? "VR" : "Mouse")})");
     }
 
     void Update()
     {
-        if (!dragging || pivot == null)
+        if (!rotating || pivot == null)
             return;
 
-        // 마우스 / 트리거 버튼에서 손 떼면 중단
-        bool stopInput =
-            Input.GetMouseButtonUp(0) ||
-            Input.GetButtonUp("Fire1") ||
-            Input.GetButtonUp("Fire2");
+        bool stopInput = false;
 
-        if (stopInput)
+        if (usingVR)
         {
-            dragging = false;
-            if (currentActive == this)
-                currentActive = null;
-            Debug.Log($"{name} : 회전 종료");
-            return;
+            // 트리거에서 손 떼면 멈춤
+            InputDevice device = InputDevices.GetDeviceAtXRNode(controllerNode);
+            if (device.TryGetFeatureValue(CommonUsages.triggerButton, out bool triggerPressed) && !triggerPressed)
+                stopInput = true;
+        }
+        else
+        {
+            // 마우스 클릭 해제 시 멈춤
+            stopInput =
+                Input.GetMouseButtonUp(0) ||
+                Input.GetButtonUp("Fire1") ||
+                Input.GetButtonUp("Fire2");
         }
 
-        // 회전량 계산
-        float mouseDelta = Input.mousePosition.x - lastMouseX;
-        lastMouseX = Input.mousePosition.x;
+        // 회전 중이면 계속 시계방향 회전
+        if (!stopInput)
+        {
+            pivot.Rotate(rotationAxis, -rotationSpeed * Time.deltaTime, Space.Self);
+        }
+        else
+        {
+            rotating = false;
+            if (currentActive == this)
+                currentActive = null;
 
-        float deltaRotation = mouseDelta * mouseSensitivity;
-        if (deltaRotation < 0)
-            deltaRotation = -deltaRotation;
+            if (audioSource && audioSource.isPlaying)
+                audioSource.Stop();
 
-        // Pivot 기준 시계 방향 회전
-        pivot.Rotate(rotationAxis, -deltaRotation, Space.Self);
+            Debug.Log($"{name} : 회전 종료");
+        }
     }
 
     void OnDisable()
     {
         if (currentActive == this)
             currentActive = null;
-        dragging = false;
+        rotating = false;
+
+        if (audioSource && audioSource.isPlaying)
+            audioSource.Stop();
     }
 }
