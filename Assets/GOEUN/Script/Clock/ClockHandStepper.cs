@@ -78,9 +78,22 @@ public class ClockHandController : MonoBehaviour, IInteractable
 
         if (usingVR)
         {
-            // 트리거에서 손 떼면 멈춤
-            InputDevice device = InputDevices.GetDeviceAtXRNode(controllerNode);
-            if (device.TryGetFeatureValue(CommonUsages.triggerButton, out bool triggerPressed) && !triggerPressed)
+            // 기존 오른손 + 왼손 트리거 둘 다 인식
+            bool rightTrigger = false;
+            bool leftTrigger = false;
+
+            // 기존 controllerNode(오른손) 우선 감지
+            InputDevice rightDevice = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            if (rightDevice.isValid)
+                rightDevice.TryGetFeatureValue(CommonUsages.triggerButton, out rightTrigger);
+
+            // 추가된 왼손 컨트롤러 감지
+            InputDevice leftDevice = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+            if (leftDevice.isValid)
+                leftDevice.TryGetFeatureValue(CommonUsages.triggerButton, out leftTrigger);
+
+            // 둘 다 손 떼면 회전 정지
+            if (!rightTrigger && !leftTrigger)
                 stopInput = true;
         }
         else

@@ -146,7 +146,9 @@ public class VR_PlayerMovement : MonoBehaviour
             Input.GetKeyDown(pcInteractKey) ||                         // 마우스 클릭
             Input.GetKeyDown(vrInteractButton) ||                      // PC Link 상태 (조이스틱 버튼)
             (XRSettings.isDeviceActive &&                              // Meta Quest Standalone 빌드
-             OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger));
+             (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger) ||  // 오른손 트리거
+              OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))  // 왼손 트리거
+            );
 
         if (triggerPressed)
         {
