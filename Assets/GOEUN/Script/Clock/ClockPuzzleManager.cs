@@ -50,7 +50,7 @@ public class ClockPuzzleManager : MonoBehaviour
             Solve();
 
         // 디버그용
-        Debug.Log($"시침:{hourDeg:F1}° / 분침:{minDeg:F1}° (목표 {targetHourDeg:F1}°, {targetMinDeg:F1}°)");
+        //Debug.Log($"시침:{hourDeg:F1}° / 분침:{minDeg:F1}° (목표 {targetHourDeg:F1}°, {targetMinDeg:F1}°)");
     }
 
     void Solve()
