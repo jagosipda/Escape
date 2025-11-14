@@ -3,19 +3,23 @@ using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(Collider))]
-public class PianoKey : MonoBehaviour
+public class PianoKey : MonoBehaviour, IInteractable
 {
     [Header("Note Info")]
-    public string noteName = "C4";  // 이 건반의 음 이름
+    public string noteName = "C4";
 
     [Header("Sound")]
-    public AudioClip noteClip;          // 이 건반의 소리 (c4, d4, ...)
-    public float playLength = 1.5f;     // 몇 초 동안만 재생할지 (길면 늘리기)
+    public AudioClip noteClip;
+    public float playLength = 1.5f;
 
     [Header("Press Visual")]
-    public float pressDepth = 0.01f;    // 얼마나 아래로 눌릴지
-    public float pressDownTime = 0.03f; // 내려가는 데 걸리는 시간
-    public float pressUpTime = 0.07f;   // 올라오는 데 걸리는 시간
+    public float pressDepth = 0.01f;
+    public float pressDownTime = 0.03f;
+    public float pressUpTime = 0.07f;
+
+    [Header("Input Cooldown")]
+    public float inputCooldown = 0.1f;   // 같은 건반 입력 최소 간격(초)
+    private float lastInputTime = -999f;
 
     private AudioSource audioSource;
     private Vector3 defaultLocalPos;
@@ -29,12 +33,23 @@ public class PianoKey : MonoBehaviour
 
     private void OnMouseDown()
     {
-        Debug.Log($"건반 클릭됨: {noteName}");
+        Debug.Log($"건반 클릭됨 (OnMouseDown): {noteName}");
+        PlayNote();
+    }
+
+    public void Interact()
+    {
+        Debug.Log($"건반 인터랙트됨 (IInteractable): {noteName}");
         PlayNote();
     }
 
     public void PlayNote()
     {
+        // ★ 같은 프레임/아주 짧은 시간에 중복 호출되면 무시
+        if (Time.time - lastInputTime < inputCooldown)
+            return;
+        lastInputTime = Time.time;
+
         if (audioSource != null && noteClip != null)
         {
             audioSource.clip = noteClip;
@@ -44,7 +59,6 @@ public class PianoKey : MonoBehaviour
         if (!isAnimating)
             StartCoroutine(PressAnimation());
 
-        // ScoreManager에 눌린 음 전달
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.OnKeyPressed(noteName);

@@ -244,4 +244,5 @@ public class VR_PlayerMovement : MonoBehaviour
         AudioClip clip = footstepClips[Random.Range(0, footstepClips.Length)];
         footstepSource.PlayOneShot(clip);
     }
+
 }
