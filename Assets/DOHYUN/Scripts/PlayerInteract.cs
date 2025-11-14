@@ -6,11 +6,11 @@ public class PlayerInteract : MonoBehaviour
     public float interactDistance = 5f;
     public KeyCode interactKey = KeyCode.E;
 
-    public NoteUI noteUI;              // NoteUI 스크립트
+    public NoteUI noteUI;              // 노트 UI
 
     void Start()
     {
-        // 혹시 인스펙터에서 안 넣었으면 자동으로 찾아보기
+        // 혹시 인스펙터에서 안 넣었으면 자동으로 찾아보기 (보조용)
         if (cam == null)
         {
             cam = GetComponentInChildren<Camera>();
@@ -23,44 +23,41 @@ public class PlayerInteract : MonoBehaviour
     {
         if (Input.GetKeyDown(interactKey))
         {
-            Debug.Log("E 눌림!");
-
-            if (cam == null)
-            {
-                Debug.LogError("cam 이 비어 있음");
-                return;
-            }
-
-            Ray ray = new Ray(cam.transform.position, cam.transform.forward);
+            // 화면 정중앙에서 Ray 쏘기
+            Ray ray = cam.ScreenPointToRay(
+                new Vector3(Screen.width / 2f, Screen.height / 2f, 0f)
+            );
             RaycastHit hit;
-
-            Debug.DrawRay(ray.origin, ray.direction * interactDistance, Color.green, 1f);
 
             if (Physics.Raycast(ray, out hit, interactDistance))
             {
-                Debug.Log("Raycast hit: " + hit.collider.name);
-
+                // 1) 노트인지 먼저 확인
                 Note note = hit.collider.GetComponent<Note>();
                 if (note != null)
                 {
-                    Debug.Log("Found Note! 내용: " + note.noteText);
                     if (noteUI != null)
                     {
                         noteUI.Show(note.noteText);
                     }
-                    else
-                    {
-                        Debug.LogError("noteUI 가 비어 있음!");
-                    }
+                    return; // 노트면 여기서 끝
                 }
-                else
+
+                // 2) 장기인지 확인
+                OrganPickup organ = hit.collider.GetComponent<OrganPickup>();
+                if (organ != null)
                 {
-                    Debug.Log("Hit 했지만 Note 컴포넌트 없음");
+                    if (OrganInventory.Instance != null)
+                    {
+                        OrganInventory.Instance.PickupOrgan(organ);
+                        Debug.Log("장기 획득: " + organ.organName);
+                    }
+
+                    // 월드에서 장기 숨기기
+                    organ.gameObject.SetActive(false);
+                    return;
                 }
-            }
-            else
-            {
-                Debug.Log("Raycast NO HIT");
+
+                // 3) 그 외 다른 것들… 필요하면 나중에 추가
             }
         }
     }
