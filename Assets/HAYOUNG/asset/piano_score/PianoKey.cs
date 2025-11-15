@@ -45,7 +45,7 @@ public class PianoKey : MonoBehaviour, IInteractable
 
     public void PlayNote()
     {
-        // ★ 같은 프레임/아주 짧은 시간에 중복 호출되면 무시
+        // 너무 짧은 시간에 중복 호출되면 무시
         if (Time.time - lastInputTime < inputCooldown)
             return;
         lastInputTime = Time.time;
@@ -59,11 +59,13 @@ public class PianoKey : MonoBehaviour, IInteractable
         if (!isAnimating)
             StartCoroutine(PressAnimation());
 
+        // ScoreManager에 눌림 전달
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.OnKeyPressed(noteName);
         }
     }
+
 
     private System.Collections.IEnumerator PlayShortClip()
     {
