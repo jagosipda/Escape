@@ -1,78 +1,60 @@
 using UnityEngine;
+using UnityEngine.XR;
 
 public class SchoolTitleUI : MonoBehaviour
 {
-    // 오프닝 화면용 카메라 (학교 특정 부분 비추는 카메라)
-    public Camera openingCamera;
+    [Header("Camera")]
+    public Camera openingCamera;   // 오프닝용 카메라
+    public Camera mainCamera;      // 플레이용 카메라
 
-    // 기존에 쓰던 메인 카메라 (VR_PlayerMovement에서 쓰는 그 카메라)
-    public Camera mainCamera;
+    [Header("UI")]
+    public GameObject titleUI;     // START / QUIT UI (TitlePanel 들어있는 Canvas)
+    public GameObject hudCanvas;   // 방향키 & 클릭 HUD_Canvas
 
-    // 플레이어 오브젝트 (스크린샷에 있는 Player)
-    public GameObject player;
-
-    // 실제로 움직임/조작 담당하는 스크립트
-    public VR_PlayerMovement playerMovement;
-
-    // 시작/종료 버튼 있는 Canvas
-    public GameObject titleUI;
+    [Header("Player")]
+    public VR_PlayerMovement playerMovement; // Player 오브젝트에 붙어있는 스크립트
 
     void Start()
     {
-        // 게임 시작하면: 오프닝 상태로 만들기
-        // 오프닝 마우스 커서 보이게 하기
-        Cursor.visible = true;
+        // ---- 오프닝 상태로 시작 ----
+        if (openingCamera) openingCamera.enabled = true;
+        if (mainCamera)    mainCamera.enabled = false;
+
+        if (titleUI)   titleUI.SetActive(true);    // 타이틀 보이기
+        if (hudCanvas) hudCanvas.SetActive(false); // HUD 숨기기
+
+        if (playerMovement) playerMovement.enabled = false; // 플레이어 움직임 잠깐 꺼두기
+
+        // 커서 보이게 & 잠금 해제 (PC용)
         Cursor.lockState = CursorLockMode.None;
-
-        // 플레이어 조작 막기
-        if (playerMovement != null)
-            playerMovement.enabled = false;
-
-        // 플레이어 자체를 안 보이게 하고 싶으면 켜기
-        // if (player != null)
-        //     player.SetActive(false);
-
-        // 카메라 전환: 오프닝 카메라만 켜고, 메인 카메라는 끄기
-        if (openingCamera != null)
-            openingCamera.enabled = true;
-
-        if (mainCamera != null)
-            mainCamera.enabled = false;
+        Cursor.visible   = true;
     }
 
+    // START 버튼 OnClick 에 연결할 함수
     public void OnClickStart()
     {
-        // 여기서부터 진짜 플레이 시작
+        // 카메라 전환
+        if (openingCamera) openingCamera.enabled = false;
+        if (mainCamera)    mainCamera.enabled = true;
 
-        // 게임 시작할 땐 다시 마우스 숨기고, 잠그기
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        // UI 전환
+        if (titleUI)   titleUI.SetActive(false);  // 타이틀 숨기기
+        if (hudCanvas) hudCanvas.SetActive(true); // HUD 켜기
 
-        // 카메라 전환: 메인 카메라 켜고, 오프닝 카메라는 끄기
-        if (openingCamera != null)
-            openingCamera.enabled = false;
+        // 플레이어 움직임 켜기
+        if (playerMovement) playerMovement.enabled = true;
 
-        if (mainCamera != null)
-            mainCamera.enabled = true;
-
-        // 플레이어 보이게 & 조작 켜기
-        if (player != null)
-            player.SetActive(true);
-
-        if (playerMovement != null)
-            playerMovement.enabled = true;
-
-        // 타이틀 UI 숨기기
-        if (titleUI != null)
-            titleUI.SetActive(false);
+        // PC 환경이면 커서 다시 잠궈서 FPS 느낌으로
+        if (!XRSettings.isDeviceActive)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible   = false;
+        }
     }
 
+    // QUIT 버튼 OnClick 에 연결할 함수
     public void OnClickQuit()
     {
-    #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-    #else
         Application.Quit();
-    #endif
     }
 }
