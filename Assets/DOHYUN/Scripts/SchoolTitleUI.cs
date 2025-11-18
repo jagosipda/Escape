@@ -3,6 +3,9 @@ using UnityEngine.XR;
 
 public class SchoolTitleUI : MonoBehaviour
 {
+
+    public PauseManager pauseManager;
+    
     [Header("Camera")]
     public Camera openingCamera;   // 오프닝용 카메라
     public Camera mainCamera;      // 플레이용 카메라
@@ -50,11 +53,17 @@ public class SchoolTitleUI : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible   = false;
         }
+
+        if (pauseManager) pauseManager.EnablePause();   // ★ 게임 시작 후부터 ESC 사용 허용
     }
 
     // QUIT 버튼 OnClick 에 연결할 함수
     public void OnClickQuit()
     {
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+    #else
         Application.Quit();
+    #endif
     }
 }
