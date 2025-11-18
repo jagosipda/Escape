@@ -17,6 +17,9 @@ public class SchoolTitleUI : MonoBehaviour
     [Header("Player")]
     public VR_PlayerMovement playerMovement; // Player 오브젝트에 붙어있는 스크립트
 
+    [Header("Reticle")]
+    public GameObject reticle;
+
     void Start()
     {
         // ---- 오프닝 상태로 시작 ----
@@ -31,6 +34,8 @@ public class SchoolTitleUI : MonoBehaviour
         // 커서 보이게 & 잠금 해제 (PC용)
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
+
+        if (reticle) reticle.SetActive(false);   // ★ 타이틀 상태에서 Reticle 숨기기
     }
 
     // START 버튼 OnClick 에 연결할 함수
@@ -55,6 +60,8 @@ public class SchoolTitleUI : MonoBehaviour
         }
 
         if (pauseManager) pauseManager.EnablePause();   // ★ 게임 시작 후부터 ESC 사용 허용
+
+        if (reticle) reticle.SetActive(true);   // 본게임에서 reticle 다시 켬
     }
 
     // QUIT 버튼 OnClick 에 연결할 함수
