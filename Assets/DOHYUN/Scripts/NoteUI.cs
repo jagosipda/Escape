@@ -1,4 +1,4 @@
-using UnityEngine;
+using UnityEngine; 
 using TMPro;   // TextMeshPro 쓰면 필요!
 
 public class NoteUI : MonoBehaviour
@@ -28,8 +28,11 @@ public class NoteUI : MonoBehaviour
 
     void Update()
     {
-        // ESC 또는 마우스 오른쪽 등으로 메모 닫기
-        if (panel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        // 패널이 떠 있을 때만 입력 처리
+        if (!panel.activeSelf) return;
+
+        // ESC 또는 마우스 왼쪽 클릭으로 메모 닫기
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(0))
         {
             Hide();
         }
