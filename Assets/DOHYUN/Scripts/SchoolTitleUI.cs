@@ -3,74 +3,92 @@ using UnityEngine.XR;
 
 public class SchoolTitleUI : MonoBehaviour
 {
-
+    [Header("Pause")]
     public PauseManager pauseManager;
-    
-    [Header("Camera")]
-    public Camera openingCamera;   // 오프닝용 카메라
-    public Camera mainCamera;      // 플레이용 카메라
+
+    [Header("PC에서만 쓰는 카메라")]
+    public Camera openingCamera;   // 시작 화면용
+    public Camera mainCamera;      // 플레이용 (PC에서만 사용)
 
     [Header("UI")]
-    public GameObject titleUI;     // START / QUIT UI (TitlePanel 들어있는 Canvas)
-    public GameObject hudCanvas;   // 방향키 & 클릭 HUD_Canvas
+    public GameObject titleUI;     // TitlePanel (Start / Quit)
+    public GameObject hudCanvas;   // HUD_Canvas (방향키, 클릭)
+    public GameObject reticle;     // 중앙 점(UI)
 
     [Header("Player")]
-    public VR_PlayerMovement playerMovement; // Player 오브젝트에 붙어있는 스크립트
+    public VR_PlayerMovement playerMovement;
 
-    [Header("Reticle")]
-    public GameObject reticle;
+    bool vrActive; // HMD 연결 여부
+
+    void Awake()
+    {
+        vrActive = XRSettings.isDeviceActive;
+    }
 
     void Start()
     {
-        // ---- 오프닝 상태로 시작 ----
-        if (openingCamera) openingCamera.enabled = true;
-        if (mainCamera)    mainCamera.enabled = false;
+        // --- 카메라 설정 ---
+        if (!vrActive)
+        {
+            // 📺 PC 모드: OpeningCamera로 타이틀 비추기
+            if (openingCamera) openingCamera.enabled = true;
+            if (mainCamera)    mainCamera.enabled = false;
 
-        if (titleUI)   titleUI.SetActive(true);    // 타이틀 보이기
-        if (hudCanvas) hudCanvas.SetActive(false); // HUD 숨기기
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible   = true;
+        }
+        else
+        {
+            // 🥽 VR 모드: 카메라는 전혀 건드리지 않음
+            // (도현이/팀원이 미리 MainCamera 끄고 OVRCameraRig 켜놓은 상태 그대로 사용)
+            // 필요하면 OpeningCamera만 꺼도 됨
+            if (openingCamera) openingCamera.enabled = false;
+            // mainCamera.enabled는 아예 건드리지 않는 게 안전 (비활성화된 상태여도 OK)
+        }
 
-        if (playerMovement) playerMovement.enabled = false; // 플레이어 움직임 잠깐 꺼두기
+        // --- UI / 플레이어 상태 ---
+        if (titleUI)   titleUI.SetActive(true);    // 타이틀 UI 보이기
+        if (hudCanvas) hudCanvas.SetActive(false); // HUD는 나중에
+        if (reticle)   reticle.SetActive(false);   // 오프닝에서는 reticle 안 보이게
+        if (playerMovement) playerMovement.enabled = false; // 아직 이동 금지
 
-        // 커서 보이게 & 잠금 해제 (PC용)
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible   = true;
-
-        if (reticle) reticle.SetActive(false);   // ★ 타이틀 상태에서 Reticle 숨기기
+        if (pauseManager) pauseManager.enabled = true;
     }
 
-    // START 버튼 OnClick 에 연결할 함수
+    // Start 버튼
     public void OnClickStart()
     {
-        // 카메라 전환
-        if (openingCamera) openingCamera.enabled = false;
-        if (mainCamera)    mainCamera.enabled = true;
-
-        // UI 전환
-        if (titleUI)   titleUI.SetActive(false);  // 타이틀 숨기기
-        if (hudCanvas) hudCanvas.SetActive(true); // HUD 켜기
-
-        // 플레이어 움직임 켜기
-        if (playerMovement) playerMovement.enabled = true;
-
-        // PC 환경이면 커서 다시 잠궈서 FPS 느낌으로
-        if (!XRSettings.isDeviceActive)
+        if (!vrActive)
         {
+            // 📺 PC 모드: 카메라 전환 + 마우스 잠그기
+            if (openingCamera) openingCamera.enabled = false;
+            if (mainCamera)    mainCamera.enabled = true;
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible   = false;
         }
+        else
+        {
+            // 🥽 VR 모드: 카메라 건드리지 않음 (OVRCameraRig 그대로 사용)
+            // 여기서는 UI/플레이어만 켜주면 됨
+        }
 
-        if (pauseManager) pauseManager.EnablePause();   // ★ 게임 시작 후부터 ESC 사용 허용
+        // 공통: 게임 시작 상태로 전환
+        if (titleUI)   titleUI.SetActive(false);
+        if (hudCanvas) hudCanvas.SetActive(true);
+        if (reticle)   reticle.SetActive(true);
+        if (playerMovement) playerMovement.enabled = true;
 
-        if (reticle) reticle.SetActive(true);   // 본게임에서 reticle 다시 켬
+        if (pauseManager) pauseManager.EnablePause();
     }
 
-    // QUIT 버튼 OnClick 에 연결할 함수
+    // Quit 버튼
     public void OnClickQuit()
     {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-    #else
+#else
         Application.Quit();
-    #endif
+#endif
     }
 }

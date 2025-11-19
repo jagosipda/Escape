@@ -8,22 +8,26 @@ public class ClickTeleportManager : MonoBehaviour
 
     void Update()
     {
+        // 🔒 필수 레퍼런스 확인 (없으면 아무것도 안 하고 리턴)
+        if (player == null) return;
+
+        Camera cam = Camera.main;
+        if (cam == null) return;   // VR에서 MainCamera 꺼져 있으면 여기서 바로 나감
+
         // 왼쪽 마우스 클릭
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = Camera.main.ScreenPointToRay(
+            Ray ray = cam.ScreenPointToRay(
                 new Vector3(Screen.width / 2f, Screen.height / 2f, 0f)
             );
             RaycastHit hit;
 
             if (Physics.Raycast(ray, out hit, maxDistance, interactMask))
             {
-                // 클릭한 오브젝트에서 TeleportDoor 찾기
                 TeleportDoor door = hit.collider.GetComponent<TeleportDoor>();
 
                 if (door != null && door.targetPoint != null)
                 {
-                    // CharacterController가 달려 있으면 잠깐 껐다가 켜줘야 튕기지 않아
                     CharacterController cc = player.GetComponent<CharacterController>();
                     if (cc != null) cc.enabled = false;
 
