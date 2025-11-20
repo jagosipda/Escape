@@ -7,18 +7,18 @@ public class SchoolTitleUI : MonoBehaviour
     public PauseManager pauseManager;
 
     [Header("PC에서만 쓰는 카메라")]
-    public Camera openingCamera;   // 시작 화면용
-    public Camera mainCamera;      // 플레이용 (PC에서만 사용)
+    public Camera openingCamera;   // 시작 화면용 카메라
+    public Camera mainCamera;      // PC 플레이용 카메라
 
     [Header("UI")]
     public GameObject titleUI;     // TitlePanel (Start / Quit)
-    public GameObject hudCanvas;   // HUD_Canvas (방향키, 클릭)
-    public GameObject reticle;     // 중앙 점(UI)
+    public GameObject hudCanvas;   // HUD_Canvas
+    public GameObject reticle;     // 중앙 점 UI
 
     [Header("Player")]
     public VR_PlayerMovement playerMovement;
 
-    bool vrActive; // HMD 연결 여부
+    bool vrActive;
 
     void Awake()
     {
@@ -27,53 +27,58 @@ public class SchoolTitleUI : MonoBehaviour
 
     void Start()
     {
-        // --- 카메라 설정 ---
-        if (!vrActive)
+        // 🥽==== VR 모드일 때: 오프닝 건너뛰고 바로 게임 시작 상태로 세팅 ====🥽
+        if (vrActive)
         {
-            // 📺 PC 모드: OpeningCamera로 타이틀 비추기
-            if (openingCamera) openingCamera.enabled = true;
-            if (mainCamera)    mainCamera.enabled = false;
-
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
-        }
-        else
-        {
-            // 🥽 VR 모드: 카메라는 전혀 건드리지 않음
-            // (도현이/팀원이 미리 MainCamera 끄고 OVRCameraRig 켜놓은 상태 그대로 사용)
-            // 필요하면 OpeningCamera만 꺼도 됨
+            // 카메라는 팀원이 직접 MainCamera 끄고 OVRCameraRig 켜서 씀
             if (openingCamera) openingCamera.enabled = false;
-            // mainCamera.enabled는 아예 건드리지 않는 게 안전 (비활성화된 상태여도 OK)
+            // mainCamera는 건들지 않음 (비활성이어도 상관 없음)
+
+            // 타이틀은 VR에선 안 쓰니까 숨기기
+            if (titleUI)   titleUI.SetActive(false);
+
+            // 바로 HUD / reticle / 플레이어 켜기
+            if (hudCanvas) hudCanvas.SetActive(true);
+            if (reticle)   reticle.SetActive(true);
+            if (playerMovement) playerMovement.enabled = true;
+
+            if (pauseManager) pauseManager.EnablePause();
+
+            // 여기서 끝! (아래 PC용 로직은 타지 않음)
+            return;
         }
 
-        // --- UI / 플레이어 상태 ---
-        if (titleUI)   titleUI.SetActive(true);    // 타이틀 UI 보이기
+        // 💻==== PC 모드 (모니터 플레이) ====💻
+        // 오프닝 카메라로 타이틀 비추기
+        if (openingCamera) openingCamera.enabled = true;
+        if (mainCamera)    mainCamera.enabled = false;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible   = true;
+
+        // UI / 플레이어 기본 상태
+        if (titleUI)   titleUI.SetActive(true);    // 타이틀 보이기
         if (hudCanvas) hudCanvas.SetActive(false); // HUD는 나중에
-        if (reticle)   reticle.SetActive(false);   // 오프닝에서는 reticle 안 보이게
-        if (playerMovement) playerMovement.enabled = false; // 아직 이동 금지
+        if (reticle)   reticle.SetActive(false);   // 오프닝에서 reticle 숨기기
+        if (playerMovement) playerMovement.enabled = false;
 
         if (pauseManager) pauseManager.enabled = true;
     }
 
-    // Start 버튼
+    // ====== PC에서만 실제로 쓰이는 Start 버튼 ======
     public void OnClickStart()
     {
         if (!vrActive)
         {
-            // 📺 PC 모드: 카메라 전환 + 마우스 잠그기
+            // PC 모드에서만 카메라 전환 + 마우스 잠그기
             if (openingCamera) openingCamera.enabled = false;
             if (mainCamera)    mainCamera.enabled = true;
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible   = false;
         }
-        else
-        {
-            // 🥽 VR 모드: 카메라 건드리지 않음 (OVRCameraRig 그대로 사용)
-            // 여기서는 UI/플레이어만 켜주면 됨
-        }
 
-        // 공통: 게임 시작 상태로 전환
+        // 공통: 게임 진행 상태로 전환
         if (titleUI)   titleUI.SetActive(false);
         if (hudCanvas) hudCanvas.SetActive(true);
         if (reticle)   reticle.SetActive(true);
@@ -82,7 +87,6 @@ public class SchoolTitleUI : MonoBehaviour
         if (pauseManager) pauseManager.EnablePause();
     }
 
-    // Quit 버튼
     public void OnClickQuit()
     {
 #if UNITY_EDITOR
