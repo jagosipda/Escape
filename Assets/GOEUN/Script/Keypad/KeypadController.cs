@@ -1,28 +1,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;   // â¬… ì¶”ê°€
 
 public class KeypadController : MonoBehaviour
 {
     [Header("Password Settings")]
-    [Tooltip("Á¤´ä ¼ıÀÚ Á¶ÇÕ (¼ø¼­´Â »ó°ü ¾øÀ½)")]
+    [Tooltip("ì •ë‹µ ìˆ«ì ì¡°í•© (ìˆœì„œëŠ” ìƒê´€ ì—†ìŒ)")]
     public List<int> correctDigits = new List<int> { 1, 4, 6, 7 };
 
     [Header("Audio")]
-    public AudioClip pressSound;      // ¹öÆ° ¼Ò¸®
-    public AudioClip unlockSound;     // Ã¶ÄÀ ¼Ò¸®
-    public AudioClip failSound;       // ½ÇÆĞ ¼Ò¸®
-    public AudioSource mainAudio;     // ¸ŞÀÎ ¿Àµğ¿À ¼Ò½º (¹öÆ° + Ã¶ÄÀ)
-    public AudioSource failAudio;     // ½ÇÆĞ ¿Àµğ¿À ¼Ò½º (½ÇÆĞ ¼Ò¸®)
+    public AudioClip pressSound;      // ë²„íŠ¼ ì†Œë¦¬
+    public AudioClip unlockSound;     // ì² ì»¥ ì†Œë¦¬
+    public AudioClip failSound;       // ì‹¤íŒ¨ ì†Œë¦¬
+    public AudioSource mainAudio;     // ë©”ì¸ ì˜¤ë””ì˜¤ ì†ŒìŠ¤ (ë²„íŠ¼ + ì² ì»¥)
+    public AudioSource failAudio;     // ì‹¤íŒ¨ ì˜¤ë””ì˜¤ ì†ŒìŠ¤ (ì‹¤íŒ¨ ì†Œë¦¬)
 
     [Header("Event")]
     public UnityEvent onUnlocked;
+
+    [Header("Ending Scene")]
+    public bool loadEndingScene = true;          // ì •ë‹µ ì‹œ ì—”ë”©ì„ ë¶ˆëŸ¬ì˜¬ì§€ ì—¬ë¶€
+    public string endingSceneName = "DemoGrassFlowers"; // ì—”ë”© ì”¬ ì´ë¦„
+    public float endingLoadDelay = 1.5f;         // ì² ì»¥ ì†Œë¦¬ ë“£ê³  ë„˜ì–´ê°€ê²Œ ë”œë ˆì´
 
     private List<int> currentInput = new List<int>();
 
     void Awake()
     {
-        // ±âº» AudioSource ÄÄÆ÷³ÍÆ® ÇÒ´ç
+        // ê¸°ë³¸ AudioSource ì»´í¬ë„ŒíŠ¸ í• ë‹¹
         if (!mainAudio)
             mainAudio = gameObject.AddComponent<AudioSource>();
         if (!failAudio)
@@ -35,7 +41,7 @@ public class KeypadController : MonoBehaviour
             mainAudio.PlayOneShot(pressSound);
 
         currentInput.Add(number);
-        Debug.Log($"[Keypad] ÀÔ·Â: {string.Join(",", currentInput)}");
+        Debug.Log($"[Keypad] ì…ë ¥: {string.Join(",", currentInput)}");
 
         if (currentInput.Count >= 4)
             CheckCode();
@@ -47,19 +53,43 @@ public class KeypadController : MonoBehaviour
 
         if (correct)
         {
-            Debug.Log("[Keypad] ¼º°ø! ¹®ÀÌ ¿­·È½À´Ï´Ù!");
+            Debug.Log("[Keypad] ì„±ê³µ! ë¬¸ì´ ì—´ë ¸ìŠµë‹ˆë‹¤!");
             if (unlockSound)
                 mainAudio.PlayOneShot(unlockSound);
+
             onUnlocked?.Invoke();
+
+            // âœ… ì—”ë”© ì”¬ ë¡œë“œ
+            if (loadEndingScene && !string.IsNullOrEmpty(endingSceneName))
+            {
+                StartCoroutine(LoadEndingAfterDelay());
+            }
         }
         else
         {
-            Debug.Log("[Keypad] ½ÇÆĞ! ´Ù½Ã ½ÃµµÇØÁÖ¼¼¿ä.");
+            Debug.Log("[Keypad] ì‹¤íŒ¨! ë‹¤ì‹œ ì‹œë„í•´ì£¼ì„¸ìš”.");
             if (failSound)
-                failAudio.PlayOneShot(failSound); // ½ÇÆĞ ¼Ò¸® Àç»ı
+                failAudio.PlayOneShot(failSound); // ì‹¤íŒ¨ ì†Œë¦¬ ì¬ìƒ
         }
 
         currentInput.Clear();
+    }
+
+    private System.Collections.IEnumerator LoadEndingAfterDelay()
+    {
+        // unlockSound ê¸¸ì´ë§Œí¼ ê¸°ë‹¤ë¦¬ê³  ì‹¶ìœ¼ë©´:
+        float delay = endingLoadDelay;
+
+        if (unlockSound != null)
+        {
+            // êµ³ì´ ì¸ìŠ¤í™í„°ì—ì„œ ì•ˆ ê±´ë“œë¦¬ê³  ì‹¶ìœ¼ë©´ ì´ ì¤„ë§Œ ì¨ë„ ë¨
+            delay = unlockSound.length;
+        }
+
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("[Keypad] ì—”ë”© ì”¬ ë¡œë“œ: " + endingSceneName);
+        SceneManager.LoadScene(endingSceneName);
     }
 
     private bool IsSetEqual(List<int> a, List<int> b)
@@ -83,6 +113,6 @@ public class KeypadController : MonoBehaviour
     public void ResetInput()
     {
         currentInput.Clear();
-        Debug.Log("[Keypad] ÀÔ·Â ÃÊ±âÈ­");
+        Debug.Log("[Keypad] ì…ë ¥ ì´ˆê¸°í™”");
     }
 }
