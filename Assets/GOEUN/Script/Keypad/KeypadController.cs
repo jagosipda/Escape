@@ -5,15 +5,15 @@ using UnityEngine.Events;
 public class KeypadController : MonoBehaviour
 {
     [Header("Password Settings")]
-    [Tooltip("Á¤´ä ¼ýÀÚµé (¼ø¼­ »ó°ü ¾øÀ½)")]
+    [Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)")]
     public List<int> correctDigits = new List<int> { 1, 4, 6, 7 };
 
     [Header("Audio")]
-    public AudioClip pressSound;      // ¹öÆ° ¼Ò¸®
-    public AudioClip unlockSound;     // Ã¶ÄÀ ¼Ò¸®
-    public AudioClip failSound;       // ½ÇÆÐ »ç¿îµå
-    public AudioSource mainAudio;     // ÀÏ¹Ý È¿°úÀ½¿ë (¹öÆ° + Ã¶ÄÀ)
-    public AudioSource failAudio;     // ½ÇÆÐ Àü¿ë (º¼·ý ³·°Ô ¼³Á¤)
+    public AudioClip pressSound;      // ï¿½ï¿½Æ° ï¿½Ò¸ï¿½
+    public AudioClip unlockSound;     // Ã¶ï¿½ï¿½ ï¿½Ò¸ï¿½
+    public AudioClip failSound;       // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    public AudioSource mainAudio;     // ï¿½Ï¹ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Æ° + Ã¶ï¿½ï¿½)
+    public AudioSource failAudio;     // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 
     [Header("Event")]
     public UnityEvent onUnlocked;
@@ -22,7 +22,7 @@ public class KeypadController : MonoBehaviour
 
     void Awake()
     {
-        // ±âº» AudioSource ¾øÀ¸¸é ÀÚµ¿ Ãß°¡
+        // ï¿½âº» AudioSource ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ß°ï¿½
         if (!mainAudio)
             mainAudio = gameObject.AddComponent<AudioSource>();
         if (!failAudio)
@@ -35,7 +35,7 @@ public class KeypadController : MonoBehaviour
             mainAudio.PlayOneShot(pressSound);
 
         currentInput.Add(number);
-        Debug.Log($"[Keypad] ÀÔ·Â: {string.Join(",", currentInput)}");
+        Debug.Log($"[Keypad] ï¿½Ô·ï¿½: {string.Join(",", currentInput)}");
 
         if (currentInput.Count >= 4)
             CheckCode();
@@ -47,16 +47,16 @@ public class KeypadController : MonoBehaviour
 
         if (correct)
         {
-            Debug.Log("[Keypad] Á¤´ä! Àá±Ý ÇØÁ¦!");
+            Debug.Log("[Keypad] ï¿½ï¿½ï¿½ï¿½! ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!");
             if (unlockSound)
                 mainAudio.PlayOneShot(unlockSound);
             onUnlocked?.Invoke();
         }
         else
         {
-            Debug.Log("[Keypad] ¿À´ä! ¸®¼ÂµË´Ï´Ù.");
+            Debug.Log("[Keypad] ï¿½ï¿½ï¿½ï¿½! ï¿½ï¿½ï¿½ÂµË´Ï´ï¿½.");
             if (failSound)
-                failAudio.PlayOneShot(failSound); // ½ÇÆÐ »ç¿îµå Àü¿ë ¼Ò½º »ç¿ë
+                failAudio.PlayOneShot(failSound); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ò½ï¿½ ï¿½ï¿½ï¿½
         }
 
         currentInput.Clear();
@@ -83,6 +83,6 @@ public class KeypadController : MonoBehaviour
     public void ResetInput()
     {
         currentInput.Clear();
-        Debug.Log("[Keypad] ÀÔ·Â ¸®¼ÂµÊ");
+        Debug.Log("[Keypad] ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½Âµï¿½");
     }
 }
