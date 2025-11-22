@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/GOEUN/Scene/New Folder/Opening.unity
+    guid: 0434e60fa13ce9746b856229361fff57
+  - enabled: 1
     path: Assets/GOEUN/Scene/School.unity
     guid: a854cdb7e9a48424c9336f93b395e10a
   - enabled: 1
