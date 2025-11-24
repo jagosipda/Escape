@@ -10,21 +10,29 @@ public class UIButton : MonoBehaviour, IInteractable
 
     public string nextSceneName = "School";
 
+    [Header("Fade Panels")]
+    public Image fadePanel_PC;    // Overlay Canvas
+    public Image fadePanel_VR;    // Screen Space Camera Canvas
+
     [Header("Fade Settings")]
-    public Image fadePanel;       // Canvas 안의 검은 Image
     public float fadeSpeed = 1.5f;
 
-    // IInteractable 인터페이스
+    // 자동으로 PC/VR에 맞는 페이드 패널 선택
+    Image GetFadePanel()
+    {
+        // VR 기기 활성화 여부로 판단
+        if (UnityEngine.XR.XRSettings.isDeviceActive && fadePanel_VR != null)
+            return fadePanel_VR;
+
+        return fadePanel_PC;
+    }
+
     public void Interact()
     {
         if (type == ButtonType.Play)
-        {
             StartCoroutine(FadeOutAndLoad());
-        }
         else if (type == ButtonType.Exit)
-        {
             StartCoroutine(FadeOutAndQuit());
-        }
     }
 
     IEnumerator FadeOutAndLoad()
@@ -38,6 +46,7 @@ public class UIButton : MonoBehaviour, IInteractable
         yield return StartCoroutine(FadeOut());
 
         Application.Quit();
+
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
@@ -45,16 +54,24 @@ public class UIButton : MonoBehaviour, IInteractable
 
     IEnumerator FadeOut()
     {
-        fadePanel.gameObject.SetActive(true);
+        Image panel = GetFadePanel();
 
-        Color c = fadePanel.color;
+        if (panel == null)
+        {
+            Debug.LogWarning("Fade Panel이 설정되지 않음.");
+            yield break;
+        }
+
+        panel.gameObject.SetActive(true);
+
+        Color c = panel.color;
         c.a = 0;
-        fadePanel.color = c;
+        panel.color = c;
 
         while (c.a < 1f)
         {
             c.a += Time.deltaTime * fadeSpeed;
-            fadePanel.color = c;
+            panel.color = c;
             yield return null;
         }
     }
