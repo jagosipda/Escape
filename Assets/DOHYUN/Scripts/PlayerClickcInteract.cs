@@ -23,44 +23,75 @@ public class PlayerClickInteract : MonoBehaviour
 
     void Update()
     {
-        // 마우스 왼쪽 클릭
+        // 왼쪽 클릭: 노트 + 장기 상호작용
         if (Input.GetMouseButtonDown(0))
         {
-            // 화면 중앙에서 Ray 쏘기 (빨간 점 위치라고 생각하면 됨)
-            Ray ray = cam.ScreenPointToRay(
-                new Vector3(Screen.width / 2f, Screen.height / 2f, 0f)
-            );
+            HandleLeftClick();
+        }
 
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, interactDistance, interactMask))
+        // 오른쪽 클릭: 장기만 집기
+        if (Input.GetMouseButtonDown(1))
+        {
+            HandleRightClickOrganOnly();
+        }
+    }
+
+    void HandleLeftClick()
+    {
+        Ray ray = cam.ScreenPointToRay(
+            new Vector3(Screen.width / 2f, Screen.height / 2f, 0f)
+        );
+
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, interactDistance, interactMask))
+        {
+            // 1) 노트 먼저 체크
+            Note note = hit.collider.GetComponent<Note>();
+            if (note != null)
             {
-                // 1) 노트 먼저 체크
-                Note note = hit.collider.GetComponent<Note>();
-                if (note != null)
+                if (noteUI != null)
                 {
-                    if (noteUI != null)
-                    {
-                        noteUI.Show(note.noteText);
-                    }
-                    return;
+                    noteUI.Show(note.noteText);
+                }
+                return;
+            }
+
+            // 2) 장기(OrganPickup) 체크
+            OrganPickup organ = hit.collider.GetComponent<OrganPickup>();
+            if (organ != null)
+            {
+                if (OrganInventory.Instance != null)
+                {
+                    OrganInventory.Instance.PickupOrgan(organ);
+                    Debug.Log("장기 획득 (왼쪽클릭): " + organ.organName);
                 }
 
-                // 2) 장기(OrganPickup) 체크
-                OrganPickup organ = hit.collider.GetComponent<OrganPickup>();
-                if (organ != null)
-                {
-                    if (OrganInventory.Instance != null)
-                    {
-                        OrganInventory.Instance.PickupOrgan(organ);
-                        Debug.Log("장기 획득: " + organ.organName);
-                    }
+                organ.gameObject.SetActive(false);
+                return;
+            }
+        }
+    }
 
-                    // 월드에서 숨기기
-                    organ.gameObject.SetActive(false);
-                    return;
+    void HandleRightClickOrganOnly()
+    {
+        Ray ray = cam.ScreenPointToRay(
+            new Vector3(Screen.width / 2f, Screen.height / 2f, 0f)
+        );
+
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, interactDistance, interactMask))
+        {
+            // 오른쪽 클릭은 장기만 체크
+            OrganPickup organ = hit.collider.GetComponent<OrganPickup>();
+            if (organ != null)
+            {
+                if (OrganInventory.Instance != null)
+                {
+                    OrganInventory.Instance.PickupOrgan(organ);
+                    Debug.Log("장기 획득 (오른쪽클릭): " + organ.organName);
                 }
 
-                // 3) 필요하면 나중에 다른 상호작용도 여기다 추가 가능
+                organ.gameObject.SetActive(false);
             }
         }
     }
